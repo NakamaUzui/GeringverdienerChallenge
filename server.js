@@ -13,7 +13,7 @@ const PORT = 3000;
 
 const CLIENT_ID = "1319942796815241256";
 const CLIENT_SECRET = "c3uXiuRdz2V4_baRx_NKvq01I8BVyEHS";
-const REDIRECT_URI = "http://localhost:3000/auth/discord/callback";
+const REDIRECT_URI = "https://geringverdienerstats.netlify.app/public/index.html/auth/discord/callback";
 
 const HENRIK_API_KEY = 'HDEV-2195c2a5-c2fc-4c55-9a07-f8e725dd2b5c';
 const HENRIK_BASE_URL = 'https://api.henrikdev.xyz/valorant';
