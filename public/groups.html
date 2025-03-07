@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="sidebar.css">
+    <link href='https://unpkg.com/boxicons@2.1.1/css/boxicons.min.css' rel='stylesheet'>
+    <title>Gruppen - Valorant Stats</title> 
+</head>
+<body>
+    <!-- Kopiere die Sidebar aus welcome.html hier rein -->
+    <nav class="sidebar close">
+        <header>
+            <div class="image-text">
+                <span class="image">
+                    <img id="userAvatar" src="logo.png" alt="User">
+                </span>
+                <div class="text logo-text">
+                    <span class="name" id="username">Loading...</span>
+                    <span class="profession" id="rank">Loading...</span>
+                </div>
+            </div>
+            <i class='bx bx-chevron-right toggle'></i>
+        </header>
+        
+        <div class="menu-bar">
+            <div class="menu">
+                <ul class="menu-links">
+                    <li class="nav-link">
+                        <a href="welcome.html" id="dashboard-link">
+                            <i class='bx bx-home-alt icon'></i>
+                            <span class="text nav-text">Dashboard</span>
+                        </a>
+                    </li>
+                    <li class="nav-link">
+                        <a href="groups.html" id="groups-link">
+                            <i class='bx bx-group icon'></i>
+                            <span class="text nav-text">Gruppen</span>
+                        </a>
+                    </li>
+                    <li class="nav-link">
+                        <a href="#" id="matches-link">
+                            <i class='bx bx-history icon'></i>
+                            <span class="text nav-text">Match History</span>
+                        </a>
+                    </li>
+                    <li class="nav-link">
+                        <a href="#" id="stats-link">
+                            <i class='bx bx-bar-chart-alt-2 icon'></i>
+                            <span class="text nav-text">Statistics</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="bottom-content">
+                <li class="">
+                    <a href="/logout">
+                        <i class='bx bx-log-out icon'></i>
+                        <span class="text nav-text">Logout</span>
+                    </a>
+                </li>
+                <li class="mode">
+                    <div class="sun-moon">
+                        <i class='bx bx-moon icon moon'></i>
+                        <i class='bx bx-sun icon sun'></i>
+                    </div>
+                    <span class="mode-text text">Dark mode</span>
+                    <div class="toggle-switch">
+                        <span class="switch"></span>
+                    </div>
+                </li>
+            </div>
+        </div>
+    </nav>
+    
+    <section class="home">
+        <div class="content">
+            <div class="groups-container">
+                <div class="groups-header">
+                    <h2>Deine Gruppen</h2>
+                    <button class="create-group-btn" onclick="openCreateGroupModal()">
+                        <i class='bx bx-plus'></i>
+                        Gruppe erstellen
+                    </button>
+                </div>
+
+                <div class="groups-list">
+                    <!-- Wird dynamisch gefüllt -->
+                </div>
+
+                <div class="other-groups-section">
+                    <div class="groups-header">
+                        <h2>Andere Gruppen</h2>
+                    </div>
+                    <div class="other-groups-list">
+                        <!-- Wird dynamisch gefüllt -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Modal für "Gruppe erstellen" -->
+            <div id="createGroupModal" class="modal">
+                <div class="modal-content">
+                    <h3>Neue Gruppe erstellen</h3>
+                    <div class="input-group">
+                        <input type="text" id="groupName" placeholder="Gruppenname">
+                    </div>
+                    <div class="input-group">
+                        <select id="groupSize">
+                            <option value="2">2 Spieler</option>
+                            <option value="3">3 Spieler</option>
+                            <option value="4">4 Spieler</option>
+                            <option value="5">5 Spieler</option>
+                        </select>
+                    </div>
+                    <button class="create-btn" onclick="createGroup()">
+                        <i class='bx bx-plus'></i>
+                        Erstellen
+                    </button>
+                    <button class="close-btn" onclick="closeModal()">
+                        <i class='bx bx-x'></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script src="sidebar.js"></script>
+    <script>
+        // Lade Benutzerdaten
+        const username = localStorage.getItem('username');
+        const riotStats = JSON.parse(localStorage.getItem('riotStats') || '{}');
+        
+        if (!username) {
+            window.location.href = '/';
+        }
+
+        document.getElementById('username').innerText = username;
+        document.getElementById('rank').innerText = riotStats.rank || 'Kein Rang';
+
+        // Modal Funktionen
+        function openCreateGroupModal() {
+            document.getElementById('createGroupModal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('createGroupModal').style.display = 'none';
+        }
+
+        async function createGroup() {
+            const nameInput = document.getElementById('groupName');
+            const sizeSelect = document.getElementById('groupSize');
+            const name = nameInput.value.trim();
+            const size = sizeSelect.value;
+
+            if (!name) {
+                alert('Bitte gib einen Gruppennamen ein');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/groups', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        name,
+                        size,
+                        creator: username
+                    })
+                });
+
+                if (response.ok) {
+                    // Reset form
+                    nameInput.value = '';
+                    sizeSelect.value = '2'; // Reset to default
+                    closeModal();
+                    loadGroups();
+                } else {
+                    alert('Fehler beim Erstellen der Gruppe');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Fehler beim Erstellen der Gruppe');
+            }
+        }
+
+        async function loadGroups() {
+            try {
+                const response = await fetch('/api/groups');
+                const data = await response.json();
+
+                // Eigene Gruppen
+                const myGroups = data.groups.filter(group => group.creator === username);
+                const groupsList = document.querySelector('.groups-list');
+                groupsList.innerHTML = myGroups.length > 0 ? myGroups.map(group => `
+                    <div class="group-card">
+                        <div class="group-info">
+                            <h3>${group.name}</h3>
+                            <span class="group-size">${group.members.length}/${group.size} Spieler</span>
+                            <span class="group-creator">Deine Gruppe</span>
+                        </div>
+                        <button class="delete-btn" onclick="deleteGroup('${group.id}')">
+                            <i class='bx bx-trash'></i>
+                            Löschen
+                        </button>
+                    </div>
+                `).join('') : '<p class="no-groups">Keine eigenen Gruppen vorhanden</p>';
+
+                // Andere Gruppen
+                const otherGroups = data.groups.filter(group => group.creator !== username);
+                const otherGroupsList = document.querySelector('.other-groups-list');
+                otherGroupsList.innerHTML = otherGroups.length > 0 ? otherGroups.map(group => `
+                    <div class="group-card">
+                        <div class="group-info">
+                            <h3>${group.name}</h3>
+                            <span class="group-size">${group.members.length}/${group.size} Spieler</span>
+                            <span class="group-creator">Erstellt von ${group.creator}</span>
+                        </div>
+                        ${group.members.includes(username) ? `
+                            <button class="leave-btn" onclick="leaveGroup('${group.id}')">
+                                <i class='bx bx-log-out'></i>
+                                Verlassen
+                            </button>
+                        ` : `
+                            <button class="join-btn" onclick="joinGroup('${group.id}')" 
+                                ${group.members.length >= group.size ? 'disabled' : ''}>
+                                ${group.members.length >= group.size ? 'Voll' : 'Beitreten'}
+                            </button>
+                        `}
+                    </div>
+                `).join('') : '<p class="no-groups">Keine anderen Gruppen verfügbar</p>';
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        // Neue Funktionen für Gruppen-Management
+        async function deleteGroup(groupId) {
+            if (!confirm('Möchtest du diese Gruppe wirklich löschen?')) return;
+            
+            try {
+                const response = await fetch(`/api/groups/${groupId}`, {
+                    method: 'DELETE'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    await loadGroups();
+                } else {
+                    alert(data.message || 'Fehler beim Löschen der Gruppe');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Fehler beim Löschen der Gruppe');
+            }
+        }
+
+        async function leaveGroup(groupId) {
+            try {
+                const response = await fetch(`/api/groups/${groupId}/leave`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username })
+                });
+                if (response.ok) {
+                    loadGroups();
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Fehler beim Verlassen der Gruppe');
+            }
+        }
+
+        // Initial Gruppen laden
+        loadGroups();
+    </script>
+</body>
+</html>
